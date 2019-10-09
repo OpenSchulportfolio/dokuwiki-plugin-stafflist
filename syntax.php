@@ -157,7 +157,10 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
         # read first line
         if ( ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
             foreach ( $show_fields_array as $field ) {
-		$keys_to_show[$field] = array_search($field, $data);
+                $key = array_search($field, $data);
+                if ( $key ) {
+		    $keys_to_show[$field] = $key;
+                }
             }
         }
 	
