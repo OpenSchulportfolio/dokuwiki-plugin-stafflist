@@ -8,6 +8,6 @@
 
 $meta['allow_in_comments'] = array('onoff');
 $meta['cleancsvfile'] = array('string');
-$meta['printtableheader'] = array('boolean');
+$meta['printtableheader'] = array('onoff');
 $meta['delimiter'] = array('string');
 $meta['cleanfields'] = array('string');

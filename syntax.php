@@ -68,6 +68,7 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
         $flags = split('&', $flags);
         $params = array(
             'showfields' => "",
+            'headersubst' => "",
         );
 
         foreach($flags as $flag) {
@@ -115,8 +116,29 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
         global $conf;
         global $ID;
 
-	$showfields = $params["showfields"];;
+        $html = "";
+
+	$showfields = $params["showfields"];
+	$headersubst = $params["headersubst"];
+
+        if ($showfields == "") {
+            # FIXME Languages
+            $html .= "<div><p><b>Stafflist:</b>Die Feldparameter müssen angegeben werden</p></div>";
+            return $html;
+        }
+        
         $show_fields_array = explode(",",$showfields);
+        
+        $substheaders = 0;
+        if ( $headersubst != "" ) {
+            $headersubst_array = explode(",",$headersubst);
+            if ( count($show_fields_array) != count($headersubst_array) ) {
+                $html .= "<div>Stafflist warning: Zahl von Headersubst stimmt nicht mit Zahl von Fields to Show ueberein!</div>";
+            } else {
+                $substheaders = 1;
+            }
+        }
+
 	
 	$delimiter = $this->getConf('delimiter');
 	$cleancsvfile = $this->getConf('cleancsvfile');
@@ -142,10 +164,9 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
 	fclose($handle);
 	
 	$handle = fopen($cleancsvfile, "r");
-
 	
 	$current_row = 0;
-	$html = "<table class=\"stafflist\">";
+	$html .= "<table class=\"stafflist\">";
 
     	while ( ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE ) {
             $num = count($data);
@@ -153,8 +174,12 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
 	    if ( $current_row == 0) {
 		if ( $this->getConf('printtableheader') == 1 ) {
                     $html .= "<tr>\n";
-		    foreach ( $show_fields_array as $field ) {
-			    $html .= "  <th>" . $field . "</th>\n";
+		    foreach ( $show_fields_array as $fieldnum => $field ) {
+                            if ( $substheaders ) {
+			        $html .= "  <th>" . $headersubst_array[$fieldnum] . "</th>\n";
+                            } else {
+			        $html .= "  <th>" . $field . "</th>\n";
+                            }
 		    }
 		    $html .= "</tr>\n";
 		}
