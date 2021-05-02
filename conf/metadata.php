@@ -6,7 +6,6 @@
  * @author Gina Haeussge <osd@foosel.net>
  */
 
-$meta['allow_in_comments'] = array('onoff');
 $meta['cleancsvfile'] = array('string');
 $meta['printtableheader'] = array('onoff');
 $meta['delimiter'] = array('string');

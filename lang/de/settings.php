@@ -1,5 +1,6 @@
 <?php
 
-$lang['allow_in_comments'] = 'Filelistsyntax in Kommentaren erlauben.';
-$lang['allowed_absolute_paths'] = 'Komma-separierte Liste absoluter Pfade, die durchsucht werden dürfen.';
-$lang['web_paths'] = 'Komma-separierte Liste von URLs, über die die zuvor definierten und korrespondierenden absoluten Pfade erreicht werden können. MUSS die selbe Anzahl an Einträgen haben wie die Liste der absoluten Pfade';
+$lang['cleancsvfile'] = 'Bevor die Tabelle erzeugt wird, wird zunächst eine saubere CSV-Datei mit diesem Namen erzeugt. ';
+$lang['delimiter'] = 'Feldtrenner';
+$lang['printtableheader'] = 'Sollen die Feldnamen im Tabellenkopf ausgegeben werden?';
+$lang['cleanfields'] = 'Diese Felder werden aus der Eingabedatei in die saubere CSV-Datei übernmommen. Alle anderen Felder werden ignoriert.';
