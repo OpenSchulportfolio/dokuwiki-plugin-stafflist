@@ -225,16 +225,20 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
      	$cleancsvfile = $this->getConf('cleancsvfile');
         $cleancsvfile = dirname($staffcsv) . "/" . cleanID($cleancsvfile);
 
+        // trim all keys
         $clean_fields_array = explode(",",$cleanfields);
+        $clean_fields_array = $this->_strip_array_keys($clean_fields_array);
+
         $keys_to_show = array();
 
 	    $handle = fopen($staffcsv, "r");
 
         # read first line
         if (($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
-            foreach ( $clean_fields_array as $field ) {
-                $trimmedfield=trim($field);
-		        $keys_to_show[$trimmedfield] = array_search("$field", $data);
+            $data = $this->_strip_array_keys($data);
+            foreach ( $clean_fields_array as $key => $value ) {
+                $trimmedvalue=trim($value);
+		        $keys_to_show[$trimmedvalue] = array_search($value, $data);
             }
         }
 	    fclose($handle);
@@ -281,6 +285,22 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
 	    # delete staffcsv (data protection)
 	    #unlink($staffcsv);
     }
+
+
+    /**
+     * Trim all array keys
+     *
+     * @param $array the array to strip
+     * @return $array stripped array
+     */
+    function _strip_array_keys($toStrip) {
+        $a = array_map('trim', array_keys($toStrip));
+        $b = array_map('trim', $toStrip);
+        $toStrip = array_combine($a, $b);
+        return $toStrip;
+    }
+
+
 
     
     /**
