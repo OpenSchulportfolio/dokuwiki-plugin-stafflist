@@ -99,18 +99,17 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
         return false;
     }
 
-    //~~ Render functions
 
-    //~~ Filelist functions
 
     /**
-     * Creates the stafflist based on the given glob-pattern and
-     * sorting and ordering parameters.
-     *
-     * @param $pattern the pattern
+     * Creates the stafflist table. Takes the input csv file as argument.
+     * First a clean  csv-file will be created, from which the actual
+     * table gest rendered. 
+     *      
+     * @param $staffcsv the input csv-file 
      * @param $params the parameters of the stafflist command
-     * @return a stafflist data structure containing the found files and base-
-     *         and webdir
+     * @return html-table with the stafflist output 
+     *         
      */
     function _create_stafflist($staffcsv, $params) {
         global $conf;
@@ -118,8 +117,8 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
 
         $html = "";
 
-	$showfields = $params["showfields"];
-	$headersubst = $params["headersubst"];
+	    $showfields = $params["showfields"];
+	    $headersubst = $params["headersubst"];
 
         if ($showfields == "") {
             # FIXME Languages
@@ -140,132 +139,147 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
         }
 
 	
-	$delimiter = $this->getConf('delimiter');
-	$cleancsvfile = $this->getConf('cleancsvfile');
+	    $delimiter = $this->getConf('delimiter');
+	    $cleancsvfile = $this->getConf('cleancsvfile');
         $cleancsvfile = dirname($staffcsv) . "/" . cleanID($cleancsvfile);
 
-	if ( file_exists ($staffcsv) ) {
-		# produce clean version 
-		$this->_clean_csv($staffcsv);
-	}
-
-	if ( ! file_exists ($cleancsvfile) ) {
-		return "No valid clean staffcsvfile found!";
-	} 
+    	// create a clean csv file which only contains the fields defined in 
+        // the plugin configuration 
+    	if ( file_exists ($staffcsv) ) {
+    		$this->_clean_csv($staffcsv);
+    	}
+        
+        // when the cleaning fails, return with message
+	    if ( ! file_exists ($cleancsvfile) ) {
+	      	return "No valid clean staffcsvfile found!";
+	    } 
 	
-	$handle = fopen($cleancsvfile, "r");
-        # read first line
+        // read first line to get fieldnames and 
+        // populate the array "$keys_to_show"
+	    $handle = fopen($cleancsvfile, "r");
         if ( ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
             foreach ( $show_fields_array as $field ) {
                 $key = array_search($field, $data);
-                if ( $key ) {
-		    $keys_to_show[$field] = $key;
+                if ( false !== $key ) {
+		            $keys_to_show[$field] = $key;
                 }
             }
         }
-	
-	fclose($handle);
-	
-	$handle = fopen($cleancsvfile, "r");
-	
-	$current_row = 0;
-	$html .= "<table class=\"stafflist\">";
+	    fclose($handle);
+
+        // create actual output table
+	    $handle = fopen($cleancsvfile, "r");
+	    $current_row = 0;
+        # Start output table
+	    $html .= "<table class=\"stafflist\">";
 
     	while ( ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE ) {
             $num = count($data);
-	    # skip first line (field names)
-	    if ( $current_row == 0) {
-		if ( $this->getConf('printtableheader') == 1 ) {
+	        
+            // first line contains field names. Print tableheaders
+            // according to config.
+	        if ( $current_row == 0) {
+		        if ( $this->getConf('printtableheader') == 1 ) {
                     $html .= "<tr>\n";
-		    foreach ( $show_fields_array as $fieldnum => $field ) {
-                            if ( $substheaders ) {
-			        $html .= "  <th>" . $headersubst_array[$fieldnum] . "</th>\n";
-                            } else {
-			        $html .= "  <th>" . $field . "</th>\n";
-                            }
-		    }
-		    $html .= "</tr>\n";
-		}
-		$current_row++;
-		continue;
-	    }
+		            foreach ( $show_fields_array as $fieldnum => $field ) {
+                        if ( $substheaders ) {
+			                $html .= "  <th>" . $headersubst_array[$fieldnum] . "</th>\n";
+                        } else {
+			                $html .= "  <th>" . $field . "</th>\n";
+                        }
+		            }
+		            $html .= "</tr>\n";
+		        }
+		        $current_row++;
+		        continue;
+	        }
 
             $html .= "<tr>\n";
             foreach ( $show_fields_array as $field ) {
-		$html .= "   <td>" . $data[$keys_to_show[$field]] . "</td>\n";
+		        $html .= "   <td>" . $data[$keys_to_show[$field]] . "</td>\n";
+	        }
+	        $html .= "</tr>\n";
 	    }
-	    $html .= "</tr>\n";
-	}
-	$html .= "</table>";
+	    
+        $html .= "</table>";
         fclose($handle);
 	
-	return $html;
+	    return $html;
     }
 
+    /**
+     * 
+     * This function creates a clean csv file from the input csv.
+     * Information about the input fields are read from the
+     * plugin-config 
+     * 
+     * @param string input csv-file
+     * 
+     */
     function _clean_csv($staffcsv) {
         global $conf;
         global $ID;
 
-	$cleanfields = $this->getConf('cleanfields');
-	$delimiter = $this->getConf('delimiter');
-	$cleancsvfile = $this->getConf('cleancsvfile');
+	    $cleanfields = $this->getConf('cleanfields');
+	    $delimiter = $this->getConf('delimiter');
+     	$cleancsvfile = $this->getConf('cleancsvfile');
         $cleancsvfile = dirname($staffcsv) . "/" . cleanID($cleancsvfile);
 
         $clean_fields_array = explode(",",$cleanfields);
         $keys_to_show = array();
 
-	$handle = fopen($staffcsv, "r");
+	    $handle = fopen($staffcsv, "r");
 
         # read first line
-        if ( ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
+        if (($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
             foreach ( $clean_fields_array as $field ) {
-		$keys_to_show[$field] = array_search($field, $data);
+                $trimmedfield=trim($field);
+		        $keys_to_show[$trimmedfield] = array_search("$field", $data);
             }
         }
-        
-	fclose($handle);
+	    fclose($handle);
 	
-	$handle = fopen($staffcsv, "r");
+	    $handle = fopen($staffcsv, "r");
 
-	$current_row = 0;
+	    $current_row = 0;
     	while ( ($data = fgetcsv($handle, 0, $delimiter)) !== FALSE ) {
             $num = count($data);
-	    
-	    # skip first line (field names)
-	    if ( $current_row == 0) {
-		$output= "";
-            	foreach ( $clean_fields_array as $field ) {
-			if ( $output == "" ) {
-				$output .= $field;
-			} else {
-			        $output .= ",";
-				$output .= $field;
-			}
-            	}
-		$output .= "\n";
-		$current_row++;
-		continue;
-	    }
+            // skip first line (field names)
+            if ( $current_row == 0) {
+                $output= "";
+                foreach ( $keys_to_show as $field=>$value ) {
+                    if ( $output == "" ) {
+                      $output .= $field;
+                    } else {
+                        $output .= ",";
+                        $output .= $field;
+                    }
+                }
+                $output .= "\n";
+                $current_row++;
+                continue;
+            }
 
-	    $rowstarted = 0;
-            foreach ( $clean_fields_array as $field ) {
-		if ( $rowstarted == 0 ) {
-			$output .= "\"" . $data[$keys_to_show[$field]] . "\"";
-			$rowstarted = 1;
-		} else {
-			$output .= ",";
-			$output .= "\"" . $data[$keys_to_show[$field]] . "\"";
-            	}
+            $rowstarted = 0;
+            foreach ( $keys_to_show as $field => $value ) {
+                if ( $rowstarted == 0 ) {
+                    $output .= "\"" . trim($data[$value]) . "\"";
+                    $rowstarted = 1;
+                } else {
+                    $output .= ",";
+                    $output .= "\"" . trim($data[$value]) . "\"";
+                }
+            }
+            $output .= "\n";
+            $current_row++;
 	    }
-	    $output .= "\n";
-	    $current_row++;
-	}
-	$fp = fopen("$cleancsvfile", 'w');
-	fwrite($fp, $output);
-	fclose($fp);
         fclose($handle);
-	# delete staffcsv (data protection)
-	#unlink($staffcsv);
+        // write output to cleancsv-file
+	    $fp = fopen("$cleancsvfile", 'w');
+	    fwrite($fp, $output);
+	    fclose($fp);
+	    # delete staffcsv (data protection)
+	    #unlink($staffcsv);
     }
 
     
@@ -273,7 +287,7 @@ class syntax_plugin_stafflist extends DokuWiki_Syntax_Plugin {
      * Converts backslashs in paths to slashs.
      *
      * @param $path the path to convert
-     * @return the converted path
+     * @return converted path
      */
     function _win_path_convert($path) {
         return str_replace('\\', '/', trim($path));
